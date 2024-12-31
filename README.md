@@ -1,10 +1,9 @@
 # Silent Install SoftEther Client
 'Silent' install of SoftEther Client
 
-This script is made with AutoIt. Modify it as you wish, and compile it!
+This script install automatically the SoftEther VPN Client. Modify it as you wish, and compile it or use directly the exe !
 
-It will automaticaly intall ```softether-vpnclient-v4.41-9787-rtm-2023.03.14-windows-x86_x64-intel.exe``` and your settings exported (*.vpn file). Both files must be in the same directory.
-
+It will automaticaly intall / import the files you put in the ```VPNClient.ini``` (.vpn and .exe).
 Enjoy.
 
 C.

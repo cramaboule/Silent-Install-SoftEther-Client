@@ -199,8 +199,6 @@ Func _LockMode($__IniFile, $__sFileContent)
 		Local $sRegex = "(?m)^(.*)HashedPassword(.*)$"
 		Local $aArray = StringRegExp($__sFileContent, $sRegex, $STR_REGEXPARRAYFULLMATCH)
 		If @error = 0 Then
-			ConsoleWrite($aArray[0] & @CRLF) ; full line
-			ConsoleWrite($aArray[2] & @CRLF) ; pwd (with space at the begining)
 			$__sFileContent = StringReplace($__sFileContent, $aArray[2], ' ' & $__sPassword)
 		Else
 			$__sFileContent = StringReplace($__sFileContent, 'bool LockMode true', 'bool LockMode true' & @CRLF & @TAB & @TAB & 'byte HashedPassword ' & $__sPassword)

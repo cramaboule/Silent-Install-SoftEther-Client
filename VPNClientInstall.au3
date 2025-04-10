@@ -1,10 +1,11 @@
 #RequireAdmin
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
 #AutoIt3Wrapper_UseX64=y
-#AutoIt3Wrapper_Res_Description=Install VPN Silently
-#AutoIt3Wrapper_Res_Fileversion=1.0.1.0
 #AutoIt3Wrapper_Res_ProductName=Install VPN Silently
-#AutoIt3Wrapper_Res_ProductVersion=1.0.1.0
+#AutoIt3Wrapper_Res_Description=Install VPN Silently
+#AutoIt3Wrapper_Res_Fileversion=1.0.2.0
+#AutoIt3Wrapper_Res_ProductName=Install VPN Silently
+#AutoIt3Wrapper_Res_ProductVersion=1.0.2.0
 #AutoIt3Wrapper_Run_Tidy=y
 #Tidy_Parameters=/reel
 #AutoIt3Wrapper_Run_Au3Stripper=y
@@ -24,6 +25,8 @@
 
 	To do: 		Nothing
 
+	V1.0.2.0	10.04.2025:
+				Added Locked settings as request from atppackging (github.com)
 	V1.0.1.0	31.12.2024:
 				New way of install
 
@@ -46,7 +49,7 @@
 #include <AutoItConstants.au3>
 #include <MsgBoxConstants.au3>
 
-Global $head = '1.0.1.0', $Title = 'Installation de SoftEther en cours '
+Global $head = '1.0.2.0', $Title = 'Installation de SoftEther en cours '
 Global $sIniFile = @ScriptDir & '\VPNClient.ini', $step = 0
 $sFinalMessage = ''
 
@@ -58,7 +61,7 @@ $sSoft = IniRead($sIniFile, 'VPN', 'exe', 'vpn-client.exe')
 Run($sSoft)
 If @error Then
 	SplashOff()
-	MsgBox(64, 'Error', 'File not found!')
+	MsgBox(64, 'Error', 'Exe file not found!')
 	Exit
 EndIf
 _Splash("lancement de l'installation")
@@ -110,7 +113,13 @@ $para = 'localhost /client /cmd:AccountDelete vpn'
 ShellExecuteWait($cmd, $para, '', '', @SW_HIDE)
 ShellExecuteWait($cmd, $para, '', '', @SW_HIDE) ; 2x
 $sVPN = IniRead($sIniFile, 'VPN', 'vpn', 'vpn.vpn')
-$para = 'localhost /client /cmd:AccountImport "' & @ScriptDir & '\' & $sVPN & '"'
+$sVPN = @ScriptDir & '\' & $sVPN
+If Not (FileExists($sVPN)) Then
+	SplashOff()
+	MsgBox(64, 'Error', 'VPN file not found!')
+	Exit
+EndIf
+$para = 'localhost /client /cmd:AccountImport "' & $sVPN & '"'
 ShellExecuteWait($cmd, $para, '', '', @SW_HIDE)
 
 RunWait(@ComSpec & ' /c ' & 'sc stop SEVPNCLIENT', @SystemDir, @SW_HIDE)
@@ -128,6 +137,7 @@ $hFile = FileOpen($sFile)
 $sFileContent = FileRead($hFile)
 FileClose($hFile)
 $sFileContent = StringReplace($sFileContent, 'bool EasyMode false', 'bool EasyMode true')
+$sFileContent = _LockMode($sIniFile, $sFileContent)
 $step += 1
 _Splash('Parametrage en cours...' & $step)
 
@@ -154,7 +164,7 @@ _WaitService('SEVPNCLIENT', 'RUNNING')
 ShellExecute('"C:\Program Files\SoftEther VPN Client\vpncmgr_x64.exe"', '', '"C:\Program Files\SoftEther VPN Client')
 
 _Splash('FIN !!!')
-Sleep(2000)
+Sleep(1000)
 SplashOff()
 Exit
 
@@ -181,3 +191,22 @@ Func _WaitService($s_ServiceName, $s_State)
 	Until StringInStr($data, $s_State)
 	Return $data
 EndFunc   ;==>_WaitService
+
+Func _LockMode($__IniFile, $__sFileContent)
+	Local $__sPassword = IniRead($__IniFile, 'lock', 'HashedPassword', '')
+	If $__sPassword <> '' Then
+		$__sFileContent = StringReplace($__sFileContent, 'bool LockMode false', 'bool LockMode true')
+		Local $sRegex = "(?m)^(.*)HashedPassword(.*)$"
+		Local $aArray = StringRegExp($__sFileContent, $sRegex, $STR_REGEXPARRAYFULLMATCH)
+		If @error = 0 Then
+			ConsoleWrite($aArray[0] & @CRLF) ; full line
+			ConsoleWrite($aArray[2] & @CRLF) ; pwd (with space at the begining)
+			$__sFileContent = StringReplace($__sFileContent, $aArray[2], ' ' & $__sPassword)
+		Else
+			$__sFileContent = StringReplace($__sFileContent, 'bool LockMode true', 'bool LockMode true' & @CRLF & @TAB & @TAB & 'byte HashedPassword ' & $__sPassword)
+		EndIf
+	Else
+		$__sFileContent = StringReplace($__sFileContent, 'bool LockMode true', 'bool LockMode false')
+	EndIf
+	Return $__sFileContent
+EndFunc   ;==>_LockMode

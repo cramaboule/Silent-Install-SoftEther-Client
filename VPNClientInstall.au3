@@ -27,6 +27,7 @@
 
 	V1.0.2.0	10.04.2025:
 				Added Locked settings as request from atppackging (github.com)
+
 	V1.0.1.0	31.12.2024:
 				New way of install
 

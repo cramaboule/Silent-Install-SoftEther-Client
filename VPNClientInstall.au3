@@ -1,19 +1,22 @@
 #RequireAdmin
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
-#AutoIt3Wrapper_UseX64=y
 #AutoIt3Wrapper_Res_Description=Install VPN Silently
-#AutoIt3Wrapper_Res_Fileversion=1.0.2.1
+#AutoIt3Wrapper_Res_Fileversion=1.0.2.2
 #AutoIt3Wrapper_Res_ProductName=Install VPN Silently
-#AutoIt3Wrapper_Res_ProductVersion=1.0.2.1
+#AutoIt3Wrapper_Res_ProductVersion=1.0.2.2
 #AutoIt3Wrapper_Run_Tidy=y
 #Tidy_Parameters=/reel
 #AutoIt3Wrapper_Run_Au3Stripper=y
 #Au3Stripper_Parameters=/mo
+#AutoIt3Wrapper_UseX64=y
 #EndRegion ;**** Directives created by AutoIt3Wrapper_GUI ****
+#Region    ;Timestamp =====================
+#    Last compile at : 2025/08/19 13:15:22
+#EndRegion ;Timestamp =====================
 #cs ----------------------------------------------------------------------------
 
 	AutoIt Version: 3.3.16.1
-	Author:         cramaboule
+	Author:         Cramaboule
 	Date:			March 2023
 
 	Script Function: Install VPN Client Silently
@@ -22,8 +25,13 @@
 	Bug: 		Not known
 
 	To do: 		Nothing
+	V1.0.2.2	19.08.2025:
+				Changed: removed old one correctly
+				Fixed: typo
+
 	V1.0.2.1	10.04.2025:
 				Changed: Full English
+
 	V1.0.2.0	10.04.2025:
 				Added: Locked settings as request from atppackging (github.com)
 
@@ -49,7 +57,7 @@
 #include <AutoItConstants.au3>
 #include <MsgBoxConstants.au3>
 
-Global $head = '1.0.2.1', $Title = 'Installation de SoftEther en cours '
+Global $head = '1.0.2.2', $Title = 'Installation of SoftEther in progress '
 Global $sIniFile = @ScriptDir & '\VPNClient.ini', $step = 0
 $sFinalMessage = ''
 
@@ -93,25 +101,22 @@ $step += 1
 _Splash('Installation step ' & $step)
 
 _WaitAndClick('SoftEther VPN Setup', 'D_SW_READY', 12324)
-_Splash('Installaling...')
+_Splash('Installing...')
 
 _WaitAndClick('SoftEther VPN Setup', 'D_SW_FINISH', 12325)
 
 _Splash('Installation has finished. Settings in progress...')
 $step = 1
-_Splash('Settings in progress...,step ' & $step)
+_Splash('Settings in progress... step ' & $step)
 
 RunWait(@ComSpec & ' /c ' & '"C:\Program Files\SoftEther VPN Client\vpncmd_x64.exe" localhost /client /cmd:NicDelete VPN', @SystemDir, @SW_HIDE)
 RunWait(@ComSpec & ' /c ' & '"C:\Program Files\SoftEther VPN Client\vpncmd_x64.exe" localhost /client /cmd:NicDelete VPN', @SystemDir, @SW_HIDE)         ; 2x
 RunWait(@ComSpec & ' /c ' & '"C:\Program Files\SoftEther VPN Client\vpncmd_x64.exe" localhost /client /cmd:NicCreate VPN', @SystemDir, @SW_HIDE)
 RunWait(@ComSpec & ' /c ' & 'powershell -Command "Set-NetIpInterface -InterfaceAlias ' & Chr(39) & 'VPN - VPN Client' & Chr(39) & ' -InterfaceMetric 250"', @SystemDir, @SW_HIDE) ; make all the internet traffic to the client and not through the VPN
 $step += 1
-_Splash('Settings in progress...,step ' & $step)
+_Splash('Settings in progress... step ' & $step)
 
-$cmd = '"C:\Program Files\SoftEther VPN Client\vpncmd_x64.exe"'
-$para = 'localhost /client /cmd:AccountDelete sbgmb'
-ShellExecuteWait($cmd, $para, '', '', @SW_HIDE)
-ShellExecuteWait($cmd, $para, '', '', @SW_HIDE) ; 2x
+$sVPNOld = IniRead($sIniFile, 'VPN', 'vpn-old', 'vpn.vpn')
 $sVPN = IniRead($sIniFile, 'VPN', 'vpn', 'vpn.vpn')
 $sVPN = @ScriptDir & '\' & $sVPN
 If Not (FileExists($sVPN)) Then
@@ -119,12 +124,16 @@ If Not (FileExists($sVPN)) Then
 	MsgBox(64, 'Error', 'VPN file not found!')
 	Exit
 EndIf
+$cmd = '"C:\Program Files\SoftEther VPN Client\vpncmd_x64.exe"'
+$para = 'localhost /client /cmd:AccountDelete ' & $sVPNOld
+ShellExecuteWait($cmd, $para, '', '', @SW_HIDE)
+ShellExecuteWait($cmd, $para, '', '', @SW_HIDE) ; 2x
 $para = 'localhost /client /cmd:AccountImport "' & $sVPN & '"'
 ShellExecuteWait($cmd, $para, '', '', @SW_HIDE)
 
 RunWait(@ComSpec & ' /c ' & 'sc stop SEVPNCLIENT', @SystemDir, @SW_HIDE)
 $step += 1
-_Splash('Settings in progress...,step ' & $step)
+_Splash('Settings in progress... step ' & $step)
 
 ; search to change change in config easymode to true
 ; but we need to make sure the service is stopped and the file is readable
@@ -139,7 +148,7 @@ FileClose($hFile)
 $sFileContent = StringReplace($sFileContent, 'bool EasyMode false', 'bool EasyMode true')
 $sFileContent = _LockMode($sIniFile, $sFileContent)
 $step += 1
-_Splash('Settings in progress...,step ' & $step)
+_Splash('Settings in progress... step ' & $step)
 
 $hdleFile = FileOpen($sFile, 2)
 If Not $hdleFile Then
@@ -157,7 +166,7 @@ EndIf
 FileClose($hdleFile)
 
 $step += 1
-_Splash('Settings in progress...,step ' & $step)
+_Splash('Settings in progress... step ' & $step)
 RunWait(@ComSpec & ' /c ' & 'sc start SEVPNCLIENT', @SystemDir, @SW_HIDE)
 _WaitService('SEVPNCLIENT', 'RUNNING')
 

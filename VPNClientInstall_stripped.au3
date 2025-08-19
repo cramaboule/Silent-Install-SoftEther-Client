@@ -1,14 +1,17 @@
 #RequireAdmin
 #Region
-#AutoIt3Wrapper_UseX64=y
 #AutoIt3Wrapper_Res_Description=Install VPN Silently
-#AutoIt3Wrapper_Res_Fileversion=1.0.2.1
+#AutoIt3Wrapper_Res_Fileversion=1.0.2.2
 #AutoIt3Wrapper_Res_ProductName=Install VPN Silently
-#AutoIt3Wrapper_Res_ProductVersion=1.0.2.1
+#AutoIt3Wrapper_Res_ProductVersion=1.0.2.2
 #AutoIt3Wrapper_Run_Tidy=y
 #Tidy_Parameters=/reel
 #AutoIt3Wrapper_Run_Au3Stripper=y
 #Au3Stripper_Parameters=/mo
+#AutoIt3Wrapper_UseX64=y
+#EndRegion
+#Region
+#    Last compile at : 2025/08/19 13:10:22
 #EndRegion
 Global Const $STR_NOCASESENSE = 0
 Global Const $STR_CASESENSE = 1
@@ -4891,7 +4894,7 @@ Global Const $CDRF_NOTIFYPOSTERASE = 0x00000040
 Global Const $CDRF_DOERASE = 0x00000008
 Global Const $CDRF_SKIPPOSTPAINT = 0x00000100
 Global Const $GUI_SS_DEFAULT_GUI = BitOR($WS_MINIMIZEBOX, $WS_CAPTION, $WS_POPUP, $WS_SYSMENU)
-Global $head = '1.0.2.1', $Title = 'Installation de SoftEther en cours '
+Global $head = '1.0.2.2', $Title = 'Installation of SoftEther in progress '
 Global $sIniFile = @ScriptDir & '\VPNClient.ini', $step = 0
 $sFinalMessage = ''
 SplashTextOn($Title & $head, '', 600, 430)
@@ -4925,21 +4928,18 @@ _WaitAndClick('SoftEther VPN Setup', 'D_SW_DIR', 12324)
 $step += 1
 _Splash('Installation step ' & $step)
 _WaitAndClick('SoftEther VPN Setup', 'D_SW_READY', 12324)
-_Splash('Installaling...')
+_Splash('Installing...')
 _WaitAndClick('SoftEther VPN Setup', 'D_SW_FINISH', 12325)
 _Splash('Installation has finished. Settings in progress...')
 $step = 1
-_Splash('Settings in progress...,step ' & $step)
+_Splash('Settings in progress... step ' & $step)
 RunWait(@ComSpec & ' /c ' & '"C:\Program Files\SoftEther VPN Client\vpncmd_x64.exe" localhost /client /cmd:NicDelete VPN', @SystemDir, @SW_HIDE)
 RunWait(@ComSpec & ' /c ' & '"C:\Program Files\SoftEther VPN Client\vpncmd_x64.exe" localhost /client /cmd:NicDelete VPN', @SystemDir, @SW_HIDE)
 RunWait(@ComSpec & ' /c ' & '"C:\Program Files\SoftEther VPN Client\vpncmd_x64.exe" localhost /client /cmd:NicCreate VPN', @SystemDir, @SW_HIDE)
 RunWait(@ComSpec & ' /c ' & 'powershell -Command "Set-NetIpInterface -InterfaceAlias ' & Chr(39) & 'VPN - VPN Client' & Chr(39) & ' -InterfaceMetric 250"', @SystemDir, @SW_HIDE)
 $step += 1
-_Splash('Settings in progress...,step ' & $step)
-$cmd = '"C:\Program Files\SoftEther VPN Client\vpncmd_x64.exe"'
-$para = 'localhost /client /cmd:AccountDelete sbgmb'
-ShellExecuteWait($cmd, $para, '', '', @SW_HIDE)
-ShellExecuteWait($cmd, $para, '', '', @SW_HIDE)
+_Splash('Settings in progress... step ' & $step)
+$sVPNOld = IniRead($sIniFile, 'VPN', 'vpn-old', 'vpn.vpn')
 $sVPN = IniRead($sIniFile, 'VPN', 'vpn', 'vpn.vpn')
 $sVPN = @ScriptDir & '\' & $sVPN
 If Not (FileExists($sVPN)) Then
@@ -4947,11 +4947,15 @@ SplashOff()
 MsgBox(64, 'Error', 'VPN file not found!')
 Exit
 EndIf
+$cmd = '"C:\Program Files\SoftEther VPN Client\vpncmd_x64.exe"'
+$para = 'localhost /client /cmd:AccountDelete ' & $sVPNOld
+ShellExecuteWait($cmd, $para, '', '', @SW_HIDE)
+ShellExecuteWait($cmd, $para, '', '', @SW_HIDE)
 $para = 'localhost /client /cmd:AccountImport "' & $sVPN & '"'
 ShellExecuteWait($cmd, $para, '', '', @SW_HIDE)
 RunWait(@ComSpec & ' /c ' & 'sc stop SEVPNCLIENT', @SystemDir, @SW_HIDE)
 $step += 1
-_Splash('Settings in progress...,step ' & $step)
+_Splash('Settings in progress... step ' & $step)
 _WaitService('SEVPNCLIENT', 'STOPPED')
 $sFile = 'C:\Program Files\SoftEther VPN Client\vpn_client.config'
 RunWait(@ComSpec & ' /c ICACLS "' & $sFile & '" /reset /T', @SystemDir, @SW_HIDE)
@@ -4961,7 +4965,7 @@ FileClose($hFile)
 $sFileContent = StringReplace($sFileContent, 'bool EasyMode false', 'bool EasyMode true')
 $sFileContent = _LockMode($sIniFile, $sFileContent)
 $step += 1
-_Splash('Settings in progress...,step ' & $step)
+_Splash('Settings in progress... step ' & $step)
 $hdleFile = FileOpen($sFile, 2)
 If Not $hdleFile Then
 SplashOff
@@ -4977,7 +4981,7 @@ Exit
 EndIf
 FileClose($hdleFile)
 $step += 1
-_Splash('Settings in progress...,step ' & $step)
+_Splash('Settings in progress... step ' & $step)
 RunWait(@ComSpec & ' /c ' & 'sc start SEVPNCLIENT', @SystemDir, @SW_HIDE)
 _WaitService('SEVPNCLIENT', 'RUNNING')
 ShellExecute('"C:\Program Files\SoftEther VPN Client\vpncmgr_x64.exe"', '', '"C:\Program Files\SoftEther VPN Client')
